@@ -1,0 +1,37 @@
+﻿@{
+    var items = new List<NavItem>
+    {
+        new("Dashboard", "bi-speedometer2", "Dashboard", "Index")
+    };
+
+    if (User.IsInRole(AppRoles.Administrator))
+    {
+        items.Add(new("User management", "bi-people", "UserManagement", "Index"));
+        items.Add(new("Categories", "bi-tags", "IncidentCategories", "Index"));
+        items.Add(new("Case assignments", "bi-diagram-3", "CaseAssignments", "Index"));
+        items.Add(new("Reports", "bi-bar-chart-line", "Reports", "Index"));
+        items.Add(new("Audit logs", "bi-journal-check", "AuditLogs", "Index"));
+        items.Add(new("Settings", "bi-sliders", "Settings", "Index"));
+    }
+    else if (User.IsInRole(AppRoles.Staff))
+    {
+        items.Add(new("Case management", "bi-folder2-open", "StaffIncidents", "Index"));
+        items.Add(new("Reports", "bi-bar-chart-line", "Reports", "Index"));
+    }
+    else if (User.IsInRole(AppRoles.Student))
+    {
+        items.Add(new("Submit a report", "bi-plus-circle", "IncidentReports", "Create"));
+        items.Add(new("My reports", "bi-folder2-open", "IncidentReports", "Index"));
+    }
+
+    items.Add(new("Profile settings", "bi-gear", "Profile", "Index"));
+}
+
+<ul class="nav nav-pills flex-column gap-1">
+    @foreach (var item in items)
+    {
+        <li class="nav-item">
+            <partial name="_NavItem" model="item" />
+        </li>
+    }
+</ul>

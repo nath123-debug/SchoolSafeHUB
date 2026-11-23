@@ -1,0 +1,77 @@
+﻿@model List<CategoryListItem>
+@{
+    ViewData["Title"] = "Categories";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h1 class="h3 mb-0">Incident categories</h1>
+        <p class="text-muted mb-0">Inactive categories stay on old reports but cannot be chosen for new ones.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Add category
+    </a>
+</div>
+
+<div class="card">
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Reports</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@c.Name</td>
+                            <td class="small">@c.Description</td>
+                            <td>@c.ReportCount</td>
+                            <td>
+                                @if (c.IsActive)
+                                {
+                                    <span class="badge text-bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-primary btn-sm">
+                                    Edit<span class="visually-hidden"> @c.Name</span>
+                                </a>
+                                @if (c.IsActive)
+                                {
+                                    <form asp-action="Deactivate" asp-route-id="@c.Id" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Deactivate<span class="visually-hidden"> @c.Name</span></button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="Activate" asp-route-id="@c.Id" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-outline-success btn-sm">Activate<span class="visually-hidden"> @c.Name</span></button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="bi bi-tags" aria-hidden="true"></i>
+            No categories yet.
+        </div>
+    }
+</div>

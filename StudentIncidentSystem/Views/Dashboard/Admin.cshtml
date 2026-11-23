@@ -1,0 +1,129 @@
+﻿@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Administrator dashboard";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-0">Administrator dashboard</h1>
+    <p class="text-muted mb-0">System statistics. Confidential case notes are not shown here.</p>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <partial name="_StatCard" model='new StatCard("Registered users (" + Model.ActiveUsers + " active)", Model.TotalUsers, "bi-people", "primary")' />
+    </div>
+    <div class="col-6 col-xl-3">
+        <partial name="_StatCard" model='new StatCard("Total incident reports", Model.TotalReports, "bi-journal-text", "secondary")' />
+    </div>
+    <div class="col-6 col-xl-3">
+        <partial name="_StatCard" model='new StatCard("Open cases", Model.OpenCases, "bi-folder2-open", "warning")' />
+    </div>
+    <div class="col-6 col-xl-3">
+        <partial name="_StatCard" model='new StatCard("Resolved cases", Model.ResolvedCases, "bi-check-circle", "success")' />
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-lg-5">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold">Incident category distribution</div>
+            <div class="card-body">
+                @if (Model.CategoryChart.HasData)
+                {
+                    <div class="chart-box"><canvas id="categoryChart" role="img" aria-label="Doughnut chart of incidents by category"></canvas></div>
+                }
+                else
+                {
+                    <div class="empty-state"><i class="bi bi-pie-chart" aria-hidden="true"></i>No incident reports yet.</div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-7">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold">Monthly incident trend (last 6 months)</div>
+            <div class="card-body">
+                @if (Model.MonthlyChart.HasData)
+                {
+                    <div class="chart-box"><canvas id="monthlyChart" role="img" aria-label="Bar chart of incidents per month"></canvas></div>
+                }
+                else
+                {
+                    <div class="empty-state"><i class="bi bi-bar-chart" aria-hidden="true"></i>No incidents in the last 6 months.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-4">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold">Shortcuts</div>
+            <div class="list-group list-group-flush">
+                <a asp-controller="UserManagement" asp-action="Index" class="list-group-item list-group-item-action"><i class="bi bi-people me-2" aria-hidden="true"></i>Manage users</a>
+                <a asp-controller="IncidentCategories" asp-action="Index" class="list-group-item list-group-item-action"><i class="bi bi-tags me-2" aria-hidden="true"></i>Manage categories</a>
+                <a asp-controller="CaseAssignments" asp-action="Index" class="list-group-item list-group-item-action"><i class="bi bi-diagram-3 me-2" aria-hidden="true"></i>Case assignments</a>
+                <a asp-controller="AuditLogs" asp-action="Index" class="list-group-item list-group-item-action"><i class="bi bi-journal-check me-2" aria-hidden="true"></i>Audit logs</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-8">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold">Recent administrative activity</div>
+            @if (Model.RecentActivity.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Time</th>
+                                <th scope="col">User</th>
+                                <th scope="col">Action</th>
+                                <th scope="col">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.RecentActivity)
+                            {
+                                <tr>
+                                    <td class="text-nowrap small"><partial name="_LocalTime" model="log.TimestampUtc" /></td>
+                                    <td>@(log.UserName ?? "System")</td>
+                                    <td>@log.Action</td>
+                                    <td class="small">@log.Details</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-journal" aria-hidden="true"></i>
+                    No activity has been recorded yet.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (Model.CategoryChart.HasData || Model.MonthlyChart.HasData)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+        <script>
+            renderChart('categoryChart', 'doughnut',
+                @Json.Serialize(Model.CategoryChart.Labels),
+                @Json.Serialize(Model.CategoryChart.Values),
+                'Reports');
+            renderChart('monthlyChart', 'bar',
+                @Json.Serialize(Model.MonthlyChart.Labels),
+                @Json.Serialize(Model.MonthlyChart.Values),
+                'Reports');
+        </script>
+    }
+}
+
+
+

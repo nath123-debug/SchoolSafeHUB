@@ -1,0 +1,13 @@
+﻿@model StatCard
+
+<div class="card h-100">
+    <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon @("text-bg-" + Model.Color)" aria-hidden="true">
+            <i class="bi @Model.Icon"></i>
+        </div>
+        <div>
+            <div class="stat-value">@Model.Value</div>
+            <div class="text-muted small">@Model.Title</div>
+        </div>
+    </div>
+</div>

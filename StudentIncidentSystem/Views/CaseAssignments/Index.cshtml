@@ -1,0 +1,117 @@
+﻿@model AssignmentIndexViewModel
+@{
+    ViewData["Title"] = "Case assignments";
+    var filtersActive = !string.IsNullOrWhiteSpace(Model.Search) || Model.StatusFilter.HasValue || Model.Show != "all";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-0">Case assignments</h1>
+    <p class="text-muted mb-0">Assign cases to staff. For privacy, report contents and notes are not shown to administrators.</p>
+</div>
+
+@if (!Model.StaffOptions.Any())
+{
+    <div class="alert alert-warning" role="alert">
+        There are no active staff members to assign cases to. Add one under User management first.
+    </div>
+}
+
+<div class="card">
+    <div class="card-body border-bottom">
+        <form method="get" asp-action="Index" class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+                <label for="q" class="form-label small mb-1">Search reference number</label>
+                <input id="q" name="q" value="@Model.Search" class="form-control" maxlength="100" placeholder="e.g. INC-2026" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label for="show" class="form-label small mb-1">Show</label>
+                <select id="show" name="show" class="form-select">
+                    <option value="all" selected="@(Model.Show == "all")">All cases</option>
+                    <option value="unassigned" selected="@(Model.Show == "unassigned")">Unassigned only</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label for="status" class="form-label small mb-1">Status</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="">All statuses</option>
+                    @foreach (var s in Enum.GetValues<IncidentStatus>())
+                    {
+                        <option value="@s" selected="@(Model.StatusFilter == s)">@StatusDisplay.Label(s)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12 col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">Filter</button>
+                @if (filtersActive)
+                {
+                    <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+                }
+            </div>
+        </form>
+    </div>
+
+    @if (Model.Cases.Items.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Reference</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Assigned to</th>
+                        <th scope="col">Submitted</th>
+                        <th scope="col" style="min-width: 18rem;">Assign</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Cases.Items)
+                    {
+                        <tr>
+                            <td class="text-nowrap">@c.ReferenceNumber</td>
+                            <td>@c.CategoryName</td>
+                            <td><partial name="_StatusBadge" model="c.Status" /></td>
+                            <td>@(c.AssignedToName ?? "Unassigned")</td>
+                            <td class="text-nowrap small"><partial name="_LocalTime" model="c.CreatedAtUtc" /></td>
+                            <td>
+                                @if (c.Status == IncidentStatus.Closed)
+                                {
+                                    <span class="text-muted small">Closed</span>
+                                }
+                                else if (Model.StaffOptions.Any(o => o.Id != c.AssignedToId))
+                                {
+                                    <form asp-action="Assign" asp-route-id="@c.Id" method="post" class="d-flex gap-2">
+                                        <select name="AssigneeId" class="form-select form-select-sm" aria-label="Assign @c.ReferenceNumber to">
+                                            @foreach (var s in Model.StaffOptions.Where(o => o.Id != c.AssignedToId))
+                                            {
+                                                <option value="@s.Id">@s.Name</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-primary btn-sm text-nowrap">@(c.AssignedToId == null ? "Assign" : "Reassign")</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">No other staff available</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="small text-muted">
+                @Model.Cases.TotalCount case@(Model.Cases.TotalCount == 1 ? "" : "s") &middot; page @Model.Cases.Page of @Model.Cases.TotalPages
+            </span>
+            <partial name="_AssignmentPager" model="new AssignmentPagerInfo(Model.Cases.Page, Model.Cases.TotalPages, Model.Search, Model.StatusFilter, Model.Show)" />
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox" aria-hidden="true"></i>
+            @(filtersActive ? "No cases match your filters." : "There are no cases yet.")
+        </div>
+    }
+</div>

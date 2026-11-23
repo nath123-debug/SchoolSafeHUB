@@ -1,0 +1,137 @@
+﻿@model EditUserViewModel
+@{
+    ViewData["Title"] = Model.FullName;
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="small text-decoration-none">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to user management
+    </a>
+    <h1 class="h3 mb-1 mt-1">@Model.FullName</h1>
+    <div class="text-muted">
+        @Model.Email &middot;
+        <span class="badge @(Model.Role == AppRoles.Administrator ? "text-bg-dark" : Model.Role == AppRoles.Staff ? "text-bg-primary" : "text-bg-secondary")">@(Model.Role ?? "None")</span>
+        @if (Model.IsActive)
+        {
+            <span class="badge text-bg-success">Active</span>
+        }
+        else
+        {
+            <span class="badge text-bg-danger">Deactivated</span>
+        }
+        @if (Model.IsLockedOut)
+        {
+            <span class="badge text-bg-warning">Locked out</span>
+        }
+        @if (Model.IsSelf)
+        {
+            <span class="badge text-bg-light border">This is you</span>
+        }
+    </div>
+</div>
+
+@if (Model.Role == AppRoles.Staff && Model.OpenCaseCount > 0)
+{
+    <div class="alert alert-info" role="note">
+        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+        This staff member holds <strong>@Model.OpenCaseCount</strong> open case(s). Reassign them on the
+        <a asp-controller="CaseAssignments" asp-action="Index">Case assignments</a> page before deactivating this account or changing its role.
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-12 col-xl-6">
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold">Account details</div>
+            <div class="card-body">
+                <form asp-action="UpdateProfile" asp-route-id="@Model.Id" method="post">
+                    <div class="mb-3">
+                        <label class="form-label" for="emailShown">Email (login name)</label>
+                        <input id="emailShown" class="form-control" value="@Model.Email" disabled />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="FullName">Full name</label>
+                        <input id="FullName" name="FullName" class="form-control" value="@Model.FullName" maxlength="100" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="SchoolIdNumber">School ID number</label>
+                        <input id="SchoolIdNumber" name="SchoolIdNumber" class="form-control" value="@Model.SchoolIdNumber" maxlength="30" />
+                    </div>
+                    <div class="small text-muted mb-2">Created <partial name="_LocalTime" model="Model.CreatedAtUtc" /></div>
+                    <button type="submit" class="btn btn-primary">Save details</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-6">
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold">Role</div>
+            <div class="card-body">
+                <form asp-action="SetRole" asp-route-id="@Model.Id" method="post">
+                    <fieldset disabled="@Model.IsSelf">
+                        <label class="form-label" for="Role">Change role</label>
+                        <select id="Role" name="Role" class="form-select">
+                            @foreach (var r in AppRoles.All)
+                            {
+                                <option value="@r" selected="@(Model.Role == r)">@r</option>
+                            }
+                        </select>
+                        <div class="form-text">The user is signed out within about a minute so the new role applies.</div>
+                        <button type="submit" class="btn btn-primary mt-2">Change role</button>
+                    </fieldset>
+                    @if (Model.IsSelf)
+                    {
+                        <div class="small text-muted mt-2">You cannot change your own role.</div>
+                    }
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold">Account status</div>
+            <div class="card-body">
+                @if (Model.IsActive)
+                {
+                    <p class="small text-muted">Deactivated users cannot log in. Their reports and history are kept.</p>
+                    @if (Model.IsSelf)
+                    {
+                        <div class="small text-muted">You cannot deactivate your own account.</div>
+                    }
+                    else
+                    {
+                        <form asp-action="Deactivate" asp-route-id="@Model.Id" method="post"
+                              onsubmit="return confirm('Deactivate this account? The user will be unable to log in.');">
+                            <button type="submit" class="btn btn-outline-danger">Deactivate account</button>
+                        </form>
+                    }
+                }
+                else
+                {
+                    <p class="small text-muted">This account is deactivated and cannot log in.</p>
+                    <form asp-action="Activate" asp-route-id="@Model.Id" method="post">
+                        <button type="submit" class="btn btn-success">Activate account</button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white fw-semibold">Reset password</div>
+            <div class="card-body">
+                <form asp-action="ResetPassword" asp-route-id="@Model.Id" method="post">
+                    <div class="mb-2">
+                        <label class="form-label" for="NewPassword">New temporary password</label>
+                        <input id="NewPassword" name="NewPassword" type="password" class="form-control" autocomplete="new-password" required />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="ConfirmPassword">Confirm password</label>
+                        <input id="ConfirmPassword" name="ConfirmPassword" type="password" class="form-control" autocomplete="new-password" required />
+                    </div>
+                    <div class="form-text">At least 8 characters, with an uppercase letter, a lowercase letter, and a number. This also clears any lockout.</div>
+                    <button type="submit" class="btn btn-primary mt-2">Reset password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

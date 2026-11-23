@@ -1,0 +1,54 @@
+﻿@model StudentIncidentSystem.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Log in";
+}
+
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="card">
+            <div class="card-body p-4 p-md-5">
+                <div class="auth-icon" aria-hidden="true"><i class="bi bi-shield-check"></i></div>
+                <h1 class="h3 text-center mb-1">Welcome back</h1>
+                <p class="text-muted text-center mb-4">Log in to report and track school incidents.</p>
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <form asp-action="Login" method="post">
+                    <input type="hidden" asp-for="ReturnUrl" />
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" autocomplete="username" placeholder="you@school.edu" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label"></label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2">Log in</button>
+                </form>
+
+                <p class="mt-4 mb-0 text-center text-muted">
+                    New student? <a asp-action="Register" class="fw-semibold">Create an account</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="alert alert-warning mt-3 small" role="note">
+            <strong>Not an emergency service.</strong> If you or someone else is in immediate danger,
+            tell a teacher or school authority right away, or contact local emergency services.
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

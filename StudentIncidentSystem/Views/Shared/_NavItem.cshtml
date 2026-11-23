@@ -1,0 +1,33 @@
+﻿@model NavItem
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+
+    var isActive = string.Equals(controller, Model.Controller, StringComparison.OrdinalIgnoreCase);
+
+    // "Submit a report" and "My reports" share one controller, so tell them apart by action
+    if (isActive && string.Equals(Model.Controller, "IncidentReports", StringComparison.OrdinalIgnoreCase))
+    {
+        var onCreate = string.Equals(action, "Create", StringComparison.OrdinalIgnoreCase);
+        var thisIsCreate = string.Equals(Model.Action, "Create", StringComparison.OrdinalIgnoreCase);
+        isActive = onCreate == thisIsCreate;
+    }
+}
+
+@if (Model.AvailableInStage != null)
+{
+    <span class="nav-link disabled" aria-disabled="true">
+        <i class="bi @Model.Icon" aria-hidden="true"></i>
+        <span>@Model.Text</span>
+        <span class="stage-badge">@Model.AvailableInStage</span>
+    </span>
+}
+else
+{
+    <a class="nav-link @(isActive ? "active" : "")"
+       asp-controller="@Model.Controller" asp-action="@Model.Action"
+       aria-current="@(isActive ? "page" : null)">
+        <i class="bi @Model.Icon" aria-hidden="true"></i>
+        <span>@Model.Text</span>
+    </a>
+}

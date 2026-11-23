@@ -1,0 +1,58 @@
+﻿@model AttachmentsPanelViewModel
+@functions {
+    static string Size(long bytes) =>
+        bytes < 1024 * 1024 ? $"{bytes / 1024.0:0.#} KB" : $"{bytes / 1024.0 / 1024.0:0.#} MB";
+}
+
+<div class="card mb-3" id="evidence">
+    <div class="card-header bg-white fw-semibold">
+        <i class="bi bi-paperclip me-1" aria-hidden="true"></i>Supporting files
+    </div>
+
+    @if (Model.Items.Any())
+    {
+        <ul class="list-group list-group-flush">
+            @foreach (var f in Model.Items)
+            {
+                var icon = f.ContentType.StartsWith("image/") ? "bi-file-earmark-image"
+                         : f.ContentType == "application/pdf" ? "bi-file-earmark-pdf"
+                         : "bi-file-earmark-word";
+                <li class="list-group-item">
+                    <i class="bi @icon me-1" aria-hidden="true"></i>
+                    <a asp-controller="Attachments" asp-action="Download" asp-route-id="@f.Id">@f.OriginalFileName</a>
+                    <div class="small text-muted">@Size(f.FileSizeBytes) &middot; <partial name="_LocalTime" model="f.UploadedAtUtc" /></div>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="bi bi-paperclip" aria-hidden="true"></i>
+            No files attached.
+        </div>
+    }
+
+    @if (Model.CanUpload)
+    {
+        <div class="card-body border-top">
+            <form asp-controller="Attachments" asp-action="Upload" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="reportId" value="@Model.ReportId" />
+                <label for="evidenceFiles" class="form-label fw-semibold">Add photos or documents</label>
+                <input id="evidenceFiles" name="files" type="file" class="form-control" multiple required
+                       accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.docx" />
+                <div class="form-text">
+                    Up to @Model.RemainingSlots more file(s). JPG, PNG, GIF, WEBP, PDF, or DOCX, up to @Model.MaxFileMb MB each.
+                    Only you and authorized school staff can open them.
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">Upload</button>
+            </form>
+        </div>
+    }
+    else if (Model.IsStudent)
+    {
+        <div class="card-footer bg-white small text-muted">
+            @(Model.IsClosed ? "This case is closed, so new files cannot be added." : "This report already has the maximum number of files.")
+        </div>
+    }
+</div>

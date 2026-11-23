@@ -1,0 +1,141 @@
+﻿@model ReportDetailsViewModel
+@{
+    ViewData["Title"] = Model.ReferenceNumber;
+    var awaitingInfo = Model.Status == IncidentStatus.AdditionalInformationRequested;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
+    <div>
+        <a asp-action="Index" class="small text-decoration-none">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to my reports
+        </a>
+        <h1 class="h3 mb-1 mt-1">@Model.Title</h1>
+        <div class="text-muted">
+            @Model.ReferenceNumber &middot; <partial name="_StatusBadge" model="Model.Status" />
+        </div>
+    </div>
+</div>
+
+@if (awaitingInfo)
+{
+    <div class="alert alert-warning" role="alert">
+        <i class="bi bi-question-circle me-1" aria-hidden="true"></i>
+        School staff have asked for more information. Please reply in the Messages section below.
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ResolutionSummary))
+{
+    <div class="alert alert-success" role="status">
+        <div class="fw-semibold mb-1"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Resolution</div>
+        <div style="white-space: pre-wrap">@Model.ResolutionSummary</div>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-12 col-xl-8">
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold">Report details</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Category</dt>
+                    <dd class="col-sm-8">@Model.CategoryName</dd>
+
+                    <dt class="col-sm-4">When it happened</dt>
+                    <dd class="col-sm-8">@Model.IncidentDateTime.ToString("MMM d, yyyy h:mm tt")</dd>
+
+                    <dt class="col-sm-4">Location</dt>
+                    <dd class="col-sm-8">@Model.Location</dd>
+
+                    <dt class="col-sm-4">People involved</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.PeopleInvolved) ? "Not provided" : Model.PeopleInvolved)</dd>
+
+                    <dt class="col-sm-4">Submitted</dt>
+                    <dd class="col-sm-8"><partial name="_LocalTime" model="Model.CreatedAtUtc" /></dd>
+
+                    <dt class="col-sm-4">Description</dt>
+                    <dd class="col-sm-8" style="white-space: pre-wrap">@Model.Description</dd>
+                </dl>
+            </div>
+        </div>
+
+        @await Component.InvokeAsync("Attachments", new { reportId = Model.Id })
+        <div class="card" id="messages">
+            <div class="card-header bg-white fw-semibold">Messages</div>
+            @if (Model.Messages.Any())
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var m in Model.Messages)
+                    {
+                        <li class="list-group-item @(m.FromMe ? "" : "bg-light")">
+                            <div class="d-flex justify-content-between flex-wrap gap-1">
+                                <span class="fw-semibold">
+                                    @(m.FromMe ? "You" : "School staff")
+                                    @if (m.IsInformationRequest)
+                                    {
+                                        <span class="badge text-bg-warning ms-1">Information request</span>
+                                    }
+                                </span>
+                                <span class="small text-muted"><partial name="_LocalTime" model="m.SentAtUtc" /></span>
+                            </div>
+                            <div class="mt-1" style="white-space: pre-wrap">@m.Body</div>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-chat-dots" aria-hidden="true"></i>
+                    No messages yet.
+                </div>
+            }
+
+            @if (Model.CanReply)
+            {
+                <div class="card-body border-top">
+                    <form asp-action="Reply" asp-route-id="@Model.Id" method="post">
+                        <label for="Body" class="form-label">Send a message to school staff</label>
+                        <textarea id="Body" name="Body" class="form-control" rows="3" maxlength="2000" required></textarea>
+                        <button type="submit" class="btn btn-primary mt-2">Send message</button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <div class="card-footer bg-white small text-muted">This case is closed, so new messages cannot be added.</div>
+            }
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+        <div class="card">
+            <div class="card-header bg-white fw-semibold">Status timeline</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var t in Model.Timeline)
+                {
+                    <li class="list-group-item">
+                        <div class="small text-muted"><partial name="_LocalTime" model="t.ChangedAtUtc" /></div>
+                        <div class="mt-1">
+                            @if (t.OldStatus.HasValue)
+                            {
+                                <partial name="_StatusBadge" model="t.OldStatus.Value" />
+                                <i class="bi bi-arrow-right mx-1" aria-label="changed to"></i>
+                                <partial name="_StatusBadge" model="t.NewStatus" />
+                            }
+                            else
+                            {
+                                <span class="me-1">Report submitted</span>
+                                <partial name="_StatusBadge" model="t.NewStatus" />
+                            }
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(t.Comment))
+                        {
+                            <div class="small mt-1">@t.Comment</div>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

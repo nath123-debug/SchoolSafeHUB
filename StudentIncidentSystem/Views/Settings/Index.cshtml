@@ -1,0 +1,50 @@
+﻿@model SettingsViewModel
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-0">Settings</h1>
+    <p class="text-muted mb-0">Application settings. Changes apply immediately.</p>
+</div>
+
+<div class="row">
+    <div class="col-12 col-xl-7">
+        <div class="card">
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <form asp-action="Index" method="post">
+                    <div class="mb-3">
+                        <label asp-for="SchoolName" class="form-label"></label>
+                        <input asp-for="SchoolName" class="form-control" maxlength="60" />
+                        <div class="form-text">Shown in the sidebar, the top bar, and browser tabs.</div>
+                        <span asp-validation-for="SchoolName" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 col-md-6 mb-3">
+                            <label asp-for="MaxFileMb" class="form-label"></label>
+                            <input asp-for="MaxFileMb" type="number" min="1" max="10" class="form-control" />
+                            <span asp-validation-for="MaxFileMb" class="text-danger"></span>
+                        </div>
+                        <div class="col-12 col-md-6 mb-3">
+                            <label asp-for="MaxFilesPerReport" class="form-label"></label>
+                            <input asp-for="MaxFilesPerReport" type="number" min="1" max="10" class="form-control" />
+                            <span asp-validation-for="MaxFilesPerReport" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-text mb-3">
+                        Upload limits apply to new uploads only. Existing files are not removed.
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save settings</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,283 @@
+﻿@model StaffCaseDetailsViewModel
+@{
+    ViewData["Title"] = Model.ReferenceNumber;
+    string NoteLabel(NoteType t) => t switch
+    {
+        NoteType.Investigation => "Investigation note",
+        NoteType.ActionTaken => "Action taken",
+        _ => "Resolution note"
+    };
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="small text-decoration-none">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to case management
+    </a>
+    <h1 class="h3 mb-1 mt-1">@Model.Title</h1>
+    <div class="text-muted">
+        @Model.ReferenceNumber &middot; <partial name="_StatusBadge" model="Model.Status" />
+        &middot; @(Model.AssignedToName != null ? "Assigned to " + Model.AssignedToName : "Unassigned")
+    </div>
+</div>
+
+@if (Model.IsUnassigned && Model.CanAssign)
+{
+    <div class="alert alert-info" role="note">
+        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+        This case is not assigned yet. Assign it to yourself to change its status, message the student, or add notes.
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-12 col-xl-8">
+
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold">Report details</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Reported by</dt>
+                    <dd class="col-sm-8">@Model.ReporterName@(string.IsNullOrWhiteSpace(Model.ReporterSchoolId) ? "" : " (" + Model.ReporterSchoolId + ")")</dd>
+
+                    <dt class="col-sm-4">Category</dt>
+                    <dd class="col-sm-8">@Model.CategoryName</dd>
+
+                    <dt class="col-sm-4">When it happened</dt>
+                    <dd class="col-sm-8">@Model.IncidentDateTime.ToString("MMM d, yyyy h:mm tt")</dd>
+
+                    <dt class="col-sm-4">Location</dt>
+                    <dd class="col-sm-8">@Model.Location</dd>
+
+                    <dt class="col-sm-4">People involved</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.PeopleInvolved) ? "Not provided" : Model.PeopleInvolved)</dd>
+
+                    <dt class="col-sm-4">Submitted</dt>
+                    <dd class="col-sm-8"><partial name="_LocalTime" model="Model.CreatedAtUtc" /></dd>
+
+                    <dt class="col-sm-4">Description</dt>
+                    <dd class="col-sm-8" style="white-space: pre-wrap">@Model.Description</dd>
+                </dl>
+                <div class="small text-muted mt-3">
+                    A report is one person's account. It does not decide that anyone is guilty.
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ResolutionSummary))
+        {
+            <div class="alert alert-success" role="status">
+                <div class="fw-semibold mb-1"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Resolution summary (visible to the student once resolved)</div>
+                <div style="white-space: pre-wrap">@Model.ResolutionSummary</div>
+            </div>
+        }
+
+        @await Component.InvokeAsync("Attachments", new { reportId = Model.Id })
+        <div class="card mb-3" id="messages">
+            <div class="card-header bg-white fw-semibold">Messages with the student</div>
+            @if (Model.Messages.Any())
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var m in Model.Messages)
+                    {
+                        <li class="list-group-item @(m.FromStudent ? "bg-light" : "")">
+                            <div class="d-flex justify-content-between flex-wrap gap-1">
+                                <span class="fw-semibold">
+                                    @m.SenderName
+                                    <span class="badge @(m.FromStudent ? "text-bg-secondary" : "text-bg-primary") ms-1">@(m.FromStudent ? "Student" : "Staff")</span>
+                                    @if (m.IsInformationRequest)
+                                    {
+                                        <span class="badge text-bg-warning ms-1">Information request</span>
+                                    }
+                                </span>
+                                <span class="small text-muted"><partial name="_LocalTime" model="m.SentAtUtc" /></span>
+                            </div>
+                            <div class="mt-1" style="white-space: pre-wrap">@m.Body</div>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="empty-state"><i class="bi bi-chat-dots" aria-hidden="true"></i>No messages yet.</div>
+            }
+
+            @if (Model.CanRequestInfo || Model.CanSendMessage)
+            {
+                <div class="card-body border-top">
+                    @if (Model.CanRequestInfo)
+                    {
+                        <form asp-action="RequestInfo" asp-route-id="@Model.Id" method="post" class="mb-4">
+                            <label for="requestBody" class="form-label fw-semibold">Request additional information</label>
+                            <textarea id="requestBody" name="Body" class="form-control" rows="3" maxlength="2000" required
+                                      placeholder="Ask the student what you need to know."></textarea>
+                            <div class="form-text">Sending this sets the status to Additional Information Requested.</div>
+                            <button type="submit" class="btn btn-warning mt-2">Send request</button>
+                        </form>
+                    }
+                    @if (Model.CanSendMessage)
+                    {
+                        <form asp-action="SendMessage" asp-route-id="@Model.Id" method="post">
+                            <label for="messageBody" class="form-label fw-semibold">Send a message</label>
+                            <textarea id="messageBody" name="Body" class="form-control" rows="3" maxlength="2000" required></textarea>
+                            <button type="submit" class="btn btn-primary mt-2">Send message</button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="card" id="notes">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-lock me-1" aria-hidden="true"></i>Internal notes
+                <span class="badge text-bg-danger ms-1">Private to staff</span>
+            </div>
+            @if (Model.Notes.Any())
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var n in Model.Notes)
+                    {
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between flex-wrap gap-1">
+                                <span class="fw-semibold">@n.AuthorName <span class="badge text-bg-light border ms-1">@NoteLabel(n.NoteType)</span></span>
+                                <span class="small text-muted"><partial name="_LocalTime" model="n.CreatedAtUtc" /></span>
+                            </div>
+                            <div class="mt-1" style="white-space: pre-wrap">@n.Content</div>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="empty-state"><i class="bi bi-journal-text" aria-hidden="true"></i>No internal notes yet.</div>
+            }
+
+            @if (Model.IsAssignedToMe)
+            {
+                <div class="card-body border-top">
+                    <form asp-action="AddNote" asp-route-id="@Model.Id" method="post">
+                        <div class="row g-2">
+                            <div class="col-12 col-md-4">
+                                <label for="noteType" class="form-label fw-semibold">Note type</label>
+                                <select id="noteType" name="NoteType" class="form-select">
+                                    @foreach (var t in Enum.GetValues<NoteType>())
+                                    {
+                                        <option value="@t">@NoteLabel(t)</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="noteContent" class="form-label fw-semibold">Note</label>
+                                <textarea id="noteContent" name="Content" class="form-control" rows="4" maxlength="4000" required></textarea>
+                                <div class="form-text">Only authorized staff can read notes. Students and administrators cannot.</div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2">Save private note</button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold">Case actions</div>
+            <div class="card-body">
+
+                @if (Model.CanAssign)
+                {
+                    <form asp-action="Assign" asp-route-id="@Model.Id" method="post" class="mb-3">
+                        <label for="assigneeId" class="form-label fw-semibold">@(Model.IsUnassigned ? "Assign case" : "Reassign case")</label>
+                        <select id="assigneeId" name="AssigneeId" class="form-select">
+                            @foreach (var s in Model.StaffOptions.Where(o => o.Id != Model.AssignedToId))
+                            {
+                                <option value="@s.Id" selected="@(s.Id == Model.CurrentUserId)">@s.Name@(s.Id == Model.CurrentUserId ? " (me)" : "")</option>
+                            }
+                        </select>
+                        @if (!Model.IsUnassigned)
+                        {
+                            <div class="form-text">After reassigning, you will no longer see this case.</div>
+                        }
+                        <button type="submit" class="btn btn-primary mt-2 w-100">@(Model.IsUnassigned ? "Assign" : "Reassign")</button>
+                    </form>
+                }
+                else if (Model.Status == IncidentStatus.Closed)
+                {
+                    <p class="text-muted small mb-0">This case is closed. No further changes can be made.</p>
+                }
+
+                @if (Model.AllowedStatuses.Any())
+                {
+                    <hr />
+                    <form asp-action="ChangeStatus" asp-route-id="@Model.Id" method="post" class="mb-3">
+                        <label for="newStatus" class="form-label fw-semibold">Change status</label>
+                        <select id="newStatus" name="NewStatus" class="form-select" required>
+                            @foreach (var s in Model.AllowedStatuses)
+                            {
+                                <option value="@s">@StatusDisplay.Label(s)</option>
+                            }
+                        </select>
+                        <label for="statusComment" class="form-label small mt-2 mb-1">Comment (optional)</label>
+                        <textarea id="statusComment" name="Comment" class="form-control" rows="2" maxlength="500"></textarea>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" class="form-check-input" id="visibleToStudent" name="VisibleToStudent" value="true" />
+                            <input type="hidden" name="VisibleToStudent" value="false" />
+                            <label class="form-check-label small" for="visibleToStudent">Show this comment to the student</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2 w-100">Update status</button>
+                    </form>
+                }
+                else if (Model.IsAssignedToMe && Model.Status != IncidentStatus.Closed && !Model.CanResolve)
+                {
+                    <hr />
+                    <p class="text-muted small mb-0">No other status changes are available from here.</p>
+                }
+
+                @if (Model.CanResolve)
+                {
+                    <hr />
+                    <form asp-action="Resolve" asp-route-id="@Model.Id" method="post">
+                        <label for="resolutionSummary" class="form-label fw-semibold">Resolve case</label>
+                        <textarea id="resolutionSummary" name="ResolutionSummary" class="form-control" rows="4"
+                                  minlength="10" maxlength="2000" required
+                                  placeholder="Describe the outcome. The student will see this."></textarea>
+                        <button type="submit" class="btn btn-success mt-2 w-100">Mark as Resolved</button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white fw-semibold">Status history</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var t in Model.Timeline)
+                {
+                    <li class="list-group-item">
+                        <div class="small text-muted"><partial name="_LocalTime" model="t.ChangedAtUtc" /> &middot; @t.ChangedByName</div>
+                        <div class="mt-1">
+                            @if (t.OldStatus.HasValue)
+                            {
+                                <partial name="_StatusBadge" model="t.OldStatus.Value" />
+                                <i class="bi bi-arrow-right mx-1" aria-label="changed to"></i>
+                            }
+                            else
+                            {
+                                <span class="me-1">Submitted</span>
+                            }
+                            <partial name="_StatusBadge" model="t.NewStatus" />
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(t.Comment))
+                        {
+                            <div class="small mt-1">
+                                @t.Comment
+                                <span class="badge @(t.CommentVisibleToStudent ? "text-bg-info" : "text-bg-secondary") ms-1">
+                                    @(t.CommentVisibleToStudent ? "Visible to student" : "Staff only")
+                                </span>
+                            </div>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+

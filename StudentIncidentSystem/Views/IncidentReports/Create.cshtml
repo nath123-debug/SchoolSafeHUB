@@ -1,0 +1,84 @@
+﻿@model CreateReportViewModel
+@{
+    ViewData["Title"] = "Submit a report";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-0">Submit an incident report</h1>
+    <p class="text-muted mb-0">Tell us what happened. Only you and authorized school staff can see this report.</p>
+</div>
+
+<div class="alert alert-warning" role="note">
+    <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+    <strong>Not an emergency service.</strong> If you or someone else is in immediate danger,
+    tell a teacher or school authority right away, or contact local emergency services.
+</div>
+
+<div class="row">
+    <div class="col-12 col-xl-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <form asp-action="Create" method="post" novalidate>
+                    <div class="mb-3">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" class="form-select"
+                                asp-items="@(new SelectList(Model.Categories, "Id", "Name"))">
+                            <option value="">Select a category...</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" maxlength="150" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="6" maxlength="4000"></textarea>
+                        <div class="form-text">Describe what you saw or experienced. Stick to facts where you can.</div>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 col-md-6 mb-3">
+                            <label asp-for="IncidentDateTime" class="form-label"></label>
+                            <input asp-for="IncidentDateTime" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="IncidentDateTime" class="text-danger"></span>
+                        </div>
+                        <div class="col-12 col-md-6 mb-3">
+                            <label asp-for="Location" class="form-label"></label>
+                            <input asp-for="Location" class="form-control" maxlength="200" placeholder="e.g. Room 204, cafeteria" />
+                            <span asp-validation-for="Location" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="PeopleInvolved" class="form-label"></label>
+                        <textarea asp-for="PeopleInvolved" class="form-control" rows="3" maxlength="1000"></textarea>
+                        <div class="form-text">Names or descriptions, only if you know them. Leave blank if unsure.</div>
+                        <span asp-validation-for="PeopleInvolved" class="text-danger"></span>
+                    </div>
+
+                    <div class="alert alert-secondary small" role="note">
+                        <i class="bi bi-paperclip me-1" aria-hidden="true"></i>
+                        After you submit, you can attach photos or documents on your report page.
+                        A report is only a record of your account. It does not decide that anyone is guilty.
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Submit report</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

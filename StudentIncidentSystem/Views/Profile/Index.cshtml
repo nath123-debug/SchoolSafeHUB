@@ -1,0 +1,66 @@
+﻿@model ProfileViewModel
+@{
+    ViewData["Title"] = "Profile settings";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-0">Profile settings</h1>
+    <p class="text-muted mb-0">Your account details and password.</p>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-xl-6">
+        <div class="card">
+            <div class="card-header bg-white fw-semibold">Your details</div>
+            <div class="card-body">
+                <form asp-action="UpdateDetails" method="post">
+                    <div class="mb-3">
+                        <label class="form-label" for="emailShown">Email (login name)</label>
+                        <input id="emailShown" class="form-control" value="@Model.Email" disabled />
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-md-6 mb-3">
+                            <label class="form-label" for="roleShown">Role</label>
+                            <input id="roleShown" class="form-control" value="@Model.Role" disabled />
+                        </div>
+                        <div class="col-12 col-md-6 mb-3">
+                            <label class="form-label" for="idShown">School ID number</label>
+                            <input id="idShown" class="form-control" value="@Model.SchoolIdNumber" disabled />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="FullName">Full name</label>
+                        <input id="FullName" name="FullName" class="form-control" value="@Model.FullName" maxlength="100" required />
+                    </div>
+                    <div class="small text-muted mb-2">Account created <partial name="_LocalTime" model="Model.CreatedAtUtc" /></div>
+                    <div class="form-text mb-2">Your email, role, and school ID can only be changed by an administrator.</div>
+                    <button type="submit" class="btn btn-primary">Save details</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-6">
+        <div class="card">
+            <div class="card-header bg-white fw-semibold">Change password</div>
+            <div class="card-body">
+                <form asp-action="ChangePassword" method="post">
+                    <div class="mb-3">
+                        <label class="form-label" for="CurrentPassword">Current password</label>
+                        <input id="CurrentPassword" name="CurrentPassword" type="password" class="form-control" autocomplete="current-password" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="NewPassword">New password</label>
+                        <input id="NewPassword" name="NewPassword" type="password" class="form-control" autocomplete="new-password" required />
+                        <div class="form-text">At least 8 characters, with an uppercase letter, a lowercase letter, and a number.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="ConfirmPassword">Confirm new password</label>
+                        <input id="ConfirmPassword" name="ConfirmPassword" type="password" class="form-control" autocomplete="new-password" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Change password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

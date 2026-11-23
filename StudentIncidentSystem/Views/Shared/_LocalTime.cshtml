@@ -1,0 +1,5 @@
+﻿@model DateTime
+@{
+    var utc = DateTime.SpecifyKind(Model, DateTimeKind.Utc);
+}
+<time class="local-time" datetime="@utc.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")">@utc.ToString("yyyy-MM-dd HH:mm") UTC</time>

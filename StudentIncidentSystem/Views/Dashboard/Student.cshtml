@@ -1,0 +1,111 @@
+﻿@model StudentDashboardViewModel
+@{
+    ViewData["Title"] = "My dashboard";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h1 class="h3 mb-0">My dashboard</h1>
+        <p class="text-muted mb-0">Track the reports you have submitted.</p>
+    </div>
+    <a asp-controller="IncidentReports" asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Submit New Report
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <partial name="_StatCard" model='new StatCard("Total reports submitted", Model.TotalReports, "bi-journal-text", "primary")' />
+    </div>
+    <div class="col-12 col-md-4">
+        <partial name="_StatCard" model='new StatCard("Under review", Model.UnderReview, "bi-hourglass-split", "info")' />
+    </div>
+    <div class="col-12 col-md-4">
+        <partial name="_StatCard" model='new StatCard("Resolved", Model.Resolved, "bi-check-circle", "success")' />
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-xl-7">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold">Recent report activity</div>
+            @if (Model.RecentReports.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Reference</th>
+                                <th scope="col">Title</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Last updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model.RecentReports)
+                            {
+                                <tr>
+                                    <td class="text-nowrap">
+                                        <a asp-controller="IncidentReports" asp-action="Details" asp-route-id="@r.Id">@r.ReferenceNumber</a>
+                                    </td>
+                                    <td>
+                                        @r.Title
+                                        <div class="small text-muted">@r.CategoryName</div>
+                                    </td>
+                                    <td><partial name="_StatusBadge" model="r.Status" /></td>
+                                    <td class="text-nowrap small"><partial name="_LocalTime" model="r.UpdatedAtUtc" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-inbox" aria-hidden="true"></i>
+                    You have not submitted any reports yet.
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-5">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold">Recent status updates</div>
+            @if (Model.RecentUpdates.Any())
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var u in Model.RecentUpdates)
+                    {
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between flex-wrap gap-1">
+                                <span class="fw-semibold">@u.ReferenceNumber</span>
+                                <span class="small text-muted"><partial name="_LocalTime" model="u.ChangedAtUtc" /></span>
+                            </div>
+                            <div class="mt-1">
+                                @if (u.OldStatus.HasValue)
+                                {
+                                    <partial name="_StatusBadge" model="u.OldStatus.Value" />
+                                    <i class="bi bi-arrow-right mx-1" aria-label="changed to"></i>
+                                }
+                                <partial name="_StatusBadge" model="u.NewStatus" />
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(u.Comment))
+                            {
+                                <div class="small mt-1">@u.Comment</div>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-bell" aria-hidden="true"></i>
+                    No status updates yet.
+                </div>
+            }
+        </div>
+    </div>
+</div>

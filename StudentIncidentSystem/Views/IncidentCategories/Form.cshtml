@@ -1,0 +1,45 @@
+﻿@model CategoryFormViewModel
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Add category" : "Edit category";
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="small text-decoration-none">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to categories
+    </a>
+    <h1 class="h3 mb-0 mt-1">@ViewData["Title"]</h1>
+</div>
+
+<div class="row">
+    <div class="col-12 col-xl-7">
+        <div class="card">
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? (int?)null : Model.Id)" method="post">
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" maxlength="100" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="3" maxlength="500"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">@(isNew ? "Add category" : "Save changes")</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
